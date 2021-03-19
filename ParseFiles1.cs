@@ -22,7 +22,7 @@ namespace ParseFileApp
                 int res = fileStream.Read(bytedata, 0, Convert.ToInt32(fileStream.Length));
                 int ln = bytedata.Length;
                 //convert byte to json
-              string s=  Convert.ToBase64String(bytedata);
+              string s=  Convert.ToString(bytedata);
               return  JsonConvert.SerializeObject(s);
                 
             }
@@ -38,23 +38,39 @@ namespace ParseFileApp
 
             XmlNodeList xmlNodeList = xmlDoc.GetElementsByTagName("details");
             DataTable dt = new DataTable();
+            dt.Columns.Add("ID");
             dt.Columns.Add("firstname");
             dt.Columns.Add("lastname");
             dt.Columns.Add("title");
             dt.Columns.Add("division");
             dt.Columns.Add("building");
             dt.Columns.Add("room");
+            dt.Columns.Add("country");
+            dt.Columns.Add("state");
             DataRow dr = dt.NewRow();// new DataRow();
-
+            int i = 1;
             foreach (XmlNode xnode in xmlNodeList)
             {
                 dr = dt.NewRow();
+                dr["ID"] = i;
+                dr["firstname"] = xnode.ChildNodes[0].ChildNodes[0].InnerText;//firstname
+                dr["lastname"] = xnode.ChildNodes[0].ChildNodes[1].InnerText;//firstname
+                dr["title"] = xnode.ChildNodes[1].InnerText;//title
+                dr["division"] = xnode.ChildNodes[2].InnerText;//division
+                dr["building"] = xnode.ChildNodes[3].InnerText;//room
+                dr["room"] = xnode.ChildNodes[4].InnerText;//room
+                dr["country"] = xnode.ChildNodes[5].FirstChild.InnerText;//country
+                dr["state"] = xnode.ChildNodes[5].LastChild.InnerText;//country
                 dt.Rows.Add(dr);
-                string s = xnode.Value;
+                i++;
             }
             using (SqlConnection sqlcon = new SqlConnection(@"Server=localhost\SQLEXPRESS;Database=Sample;Trusted_Connection=True"))
             {
-
+                sqlcon.Open();
+                SqlBulkCopy bulkCopy = new SqlBulkCopy(sqlcon);
+                bulkCopy.DestinationTableName = "Employees";
+                bulkCopy.WriteToServer(dt);
+                sqlcon.Close();
             }
         }
     }
